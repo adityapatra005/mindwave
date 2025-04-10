@@ -142,29 +142,6 @@ function App() {
     }
   };
 
-  const updateWaveform = () => {
-    if (oscillatorLeftRef.current && oscillatorRightRef.current && audioContextRef.current) {
-      const now = audioContextRef.current.currentTime;
-      
-      // Create a smooth transition for the waveform change
-      oscillatorLeftRef.current.type = 'sine';
-      oscillatorRightRef.current.type = 'sine';
-      
-      // Set a very low frequency temporarily
-      oscillatorLeftRef.current.frequency.setValueAtTime(1, now);
-      oscillatorRightRef.current.frequency.setValueAtTime(1, now);
-      
-      // Wait a tiny moment and then set the new waveform and frequencies
-      setTimeout(() => {
-        if (oscillatorLeftRef.current && oscillatorRightRef.current) {
-          oscillatorLeftRef.current.type = waveform;
-          oscillatorRightRef.current.type = waveform;
-          updateFrequencies();
-        }
-      }, 50);
-    }
-  };
-
   const updateVolumeState = (value) => {
     if (gainNodeRef.current) {
       gainNodeRef.current.gain.value = (value / 100) * 0.5;
@@ -244,12 +221,15 @@ function App() {
             <label>Waveform Type:</label>
             <select value={waveform} onChange={(e) => {
               setWaveform(e.target.value);
-              updateWaveform();
+              if (oscillatorLeftRef.current && oscillatorRightRef.current) {
+                oscillatorLeftRef.current.type = e.target.value;
+                oscillatorRightRef.current.type = e.target.value;
+              }
             }}>
-              <option value="sine">Sine Wave</option>
-              <option value="square">Square Wave</option>
-              <option value="triangle">Triangle Wave</option>
-              <option value="sawtooth">Sawtooth Wave</option>
+              <option value="sine">Sine Wave (smoothest, purest tone)</option>
+              <option value="square">Square Wave (harsh, strong)</option>
+              <option value="triangle">Triangle Wave (mellow, warm)</option>
+              <option value="sawtooth">Sawtooth Wave (buzzy)</option>
             </select>
           </div>
           
