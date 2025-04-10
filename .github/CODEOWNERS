@@ -1,0 +1,18 @@
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @adityapatra005 will be requested for review when someone 
+# opens a pull request.
+*       @adityapatra005
+
+# Web application files
+*.html   @adityapatra005
+*.css    @adityapatra005
+*.js     @adityapatra005
+
+# Documentation
+*.md     @adityapatra005
+*.txt    @adityapatra005
+
+# GitHub specific files
+.github/* @adityapatra005
+
