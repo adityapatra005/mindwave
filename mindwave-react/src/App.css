@@ -246,6 +246,125 @@ select:hover {
     padding: 0.5rem 1rem;
 }
 
+/* Session Tracker Styles */
+.session-tracker {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+.streak-info {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.streak-box {
+  background: rgba(0, 255, 204, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 150px;
+}
+
+.streak-box h3 {
+  margin: 0;
+  color: rgb(0, 255, 204);
+  font-size: 1.1em;
+}
+
+.streak-box p {
+  margin: 10px 0 0;
+  font-size: 1.5em;
+  color: white;
+}
+
+.meditation-calendar {
+  width: 100% !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: none !important;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.meditation-calendar button {
+  color: white !important;
+}
+
+.meditation-calendar .react-calendar__tile--active {
+  background: rgba(0, 255, 204, 0.2) !important;
+}
+
+.meditation-calendar .react-calendar__tile:enabled:hover {
+  background: rgba(0, 255, 204, 0.1) !important;
+}
+
+.session-marker {
+  font-size: 0.8em;
+  color: rgb(0, 255, 204);
+  margin-top: 5px;
+}
+
+/* Meditation Timer Styles */
+.meditation-timer {
+  background: rgba(0, 255, 204, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.timer-display {
+  font-size: 2.5em;
+  color: rgb(0, 255, 204);
+  font-family: monospace;
+}
+
+/* Stats Page Styles */
+.stats-page {
+  min-height: 100vh;
+  background: #1a1a1a;
+  padding: 20px;
+  color: white;
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 20px;
+}
+
+.back-button {
+  color: rgb(0, 255, 204);
+  text-decoration: none;
+  font-size: 1.1em;
+  padding: 10px;
+  border-radius: 5px;
+  background: rgba(0, 255, 204, 0.1);
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background: rgba(0, 255, 204, 0.2);
+}
+
+.stats-link {
+  display: inline-block;
+  color: rgb(0, 255, 204);
+  text-decoration: none;
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  background: rgba(0, 255, 204, 0.1);
+  transition: background-color 0.3s;
+}
+
+.stats-link:hover {
+  background: rgba(0, 255, 204, 0.2);
+}
+
 @media (max-width: 600px) {
     .preset-buttons,
     .sound-customization {
