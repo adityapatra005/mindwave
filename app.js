@@ -13,13 +13,16 @@ class BinauralBeatsGenerator {
     setupUI() {
         this.baseFreqSlider = document.getElementById('baseFreq');
         this.beatFreqSlider = document.getElementById('beatFreq');
+        this.volumeSlider = document.getElementById('volume');
         this.baseFreqValue = document.getElementById('baseFreqValue');
         this.beatFreqValue = document.getElementById('beatFreqValue');
+        this.volumeValue = document.getElementById('volumeValue');
         this.playButton = document.getElementById('playButton');
         this.currentState = document.getElementById('currentState');
 
         this.baseFreqSlider.addEventListener('input', () => this.updateFrequencies());
         this.beatFreqSlider.addEventListener('input', () => this.updateFrequencies());
+        this.volumeSlider.addEventListener('input', () => this.updateVolume());
         this.playButton.addEventListener('click', () => this.togglePlay());
 
         // Setup preset buttons
@@ -35,10 +38,21 @@ class BinauralBeatsGenerator {
         canvas.height = canvas.offsetHeight;
     }
 
+    updateVolume() {
+        const volumePercent = parseInt(this.volumeSlider.value);
+        this.volumeValue.textContent = `${volumePercent}%`;
+        
+        if (this.gainNode) {
+            // Convert percentage to a value between 0 and 1, with a max of 0.5 for safety
+            const volumeValue = Math.min((volumePercent / 100) * 0.5, 0.5);
+            this.gainNode.gain.setValueAtTime(volumeValue, this.audioContext.currentTime);
+        }
+    }
+
     async initAudio() {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         this.gainNode = this.audioContext.createGain();
-        this.gainNode.gain.value = 0.1; // Set volume to a comfortable level
+        this.gainNode.gain.value = (parseInt(this.volumeSlider.value) / 100) * 0.5; // Set initial volume
 
         this.analyser = this.audioContext.createAnalyser();
         this.analyser.fftSize = 2048;
