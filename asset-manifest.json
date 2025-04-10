@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/adityapatra005/mindwave/static/css/main.56222a9e.css",
-    "main.js": "/adityapatra005/mindwave/static/js/main.1c2cc174.js",
-    "static/js/453.d20c9ff2.chunk.js": "/adityapatra005/mindwave/static/js/453.d20c9ff2.chunk.js",
-    "index.html": "/adityapatra005/mindwave/index.html",
-    "main.56222a9e.css.map": "/adityapatra005/mindwave/static/css/main.56222a9e.css.map",
-    "main.1c2cc174.js.map": "/adityapatra005/mindwave/static/js/main.1c2cc174.js.map",
-    "453.d20c9ff2.chunk.js.map": "/adityapatra005/mindwave/static/js/453.d20c9ff2.chunk.js.map"
+    "main.css": "/mindwave/static/css/main.56222a9e.css",
+    "main.js": "/mindwave/static/js/main.d22a590a.js",
+    "static/js/453.d20c9ff2.chunk.js": "/mindwave/static/js/453.d20c9ff2.chunk.js",
+    "index.html": "/mindwave/index.html",
+    "main.56222a9e.css.map": "/mindwave/static/css/main.56222a9e.css.map",
+    "main.d22a590a.js.map": "/mindwave/static/js/main.d22a590a.js.map",
+    "453.d20c9ff2.chunk.js.map": "/mindwave/static/js/453.d20c9ff2.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.56222a9e.css",
-    "static/js/main.1c2cc174.js"
+    "static/js/main.d22a590a.js"
   ]
 }
