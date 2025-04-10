@@ -41,10 +41,12 @@ function App() {
     oscillatorLeftRef.current.type = waveform;
     oscillatorRightRef.current.type = waveform;
 
-    gainNodeRef.current.gain.value = volume * 0.005;
+    gainNodeRef.current.gain.value = (volume / 100) * 0.5;
 
-    oscillatorLeftRef.current.connect(gainNodeRef.current);
-    oscillatorRightRef.current.connect(gainNodeRef.current);
+    const merger = audioContextRef.current.createChannelMerger(2);
+    oscillatorLeftRef.current.connect(merger, 0, 0);
+    oscillatorRightRef.current.connect(merger, 0, 1);
+    merger.connect(gainNodeRef.current);
     gainNodeRef.current.connect(analyserRef.current);
     analyserRef.current.connect(audioContextRef.current.destination);
 
@@ -104,7 +106,7 @@ function App() {
 
   useEffect(() => {
     if (isPlaying) {
-      initAudio();
+      initAudio().catch(console.error);
     } else {
       stopAudio();
     }
@@ -139,9 +141,6 @@ function App() {
   const updateVolumeState = (newVolume) => {
     if (gainNodeRef.current) {
       gainNodeRef.current.gain.value = (newVolume / 100) * 0.5;
-    }
-    if (ambientGainRef.current) {
-      ambientGainRef.current.gain.value = (ambientVolume / 100) * 0.3;
     }
   };
 
