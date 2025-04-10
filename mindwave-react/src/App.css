@@ -181,12 +181,80 @@ canvas {
     font-size: 0.9rem;
 }
 
+.sound-customization {
+    margin: 2rem 0;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.waveform-control,
+.ambient-control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+select {
+    padding: 0.8rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+select:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.favorites-section {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.save-button {
+    background: linear-gradient(45deg, #00ccff, #00ffcc);
+    color: #1a1a1a;
+    font-weight: bold;
+    padding: 1rem 2rem;
+    margin-bottom: 1rem;
+}
+
+.favorites-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.favorites-list h3 {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: #00ffcc;
+}
+
+.favorites-list button {
+    background: rgba(0, 255, 204, 0.1);
+    border: 1px solid #00ffcc;
+    padding: 0.5rem 1rem;
+}
+
 @media (max-width: 600px) {
-    .preset-buttons {
+    .preset-buttons,
+    .sound-customization {
         flex-direction: column;
     }
     
-    .preset-buttons button {
+    .preset-buttons button,
+    .waveform-control,
+    .ambient-control {
         width: 100%;
     }
     
