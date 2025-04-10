@@ -14,9 +14,7 @@ function App() {
   const analyserRef = useRef(null);
   const canvasRef = useRef(null);
 
-  useEffect(() => {
-    // Initialize audio
-    const initAudio = async () => {
+  const initAudio = async () => {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
       gainNodeRef.current = audioContextRef.current.createGain();
       gainNodeRef.current.gain.value = (volume / 100) * 0.5;  // Initial volume
@@ -37,18 +35,38 @@ function App() {
       merger.connect(gainNodeRef.current);
       gainNodeRef.current.connect(analyserRef.current);
       analyserRef.current.connect(audioContextRef.current.destination);
-
-      oscillatorLeftRef.current.start();
-      oscillatorRightRef.current.start();
     };
 
-    initAudio();
-
-    return () => {
-      // Cleanup
+  const stopAudio = () => {
+    try {
+      if (oscillatorLeftRef.current && isPlaying) {
+        oscillatorLeftRef.current.stop();
+        oscillatorLeftRef.current.disconnect();
+      }
+      if (oscillatorRightRef.current && isPlaying) {
+        oscillatorRightRef.current.stop();
+        oscillatorRightRef.current.disconnect();
+      }
+      if (gainNodeRef.current) {
+        gainNodeRef.current.disconnect();
+      }
+      if (analyserRef.current) {
+        analyserRef.current.disconnect();
+      }
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
+    } catch (error) {
+      console.log('Audio cleanup error:', error);
+    }
+  };
+
+  useEffect(() => {
+    initAudio();
+    
+    // Cleanup function
+    return () => {
+      stopAudio();
     };
   }, []);  // Empty dependency array for one-time init
 
@@ -62,20 +80,27 @@ function App() {
     }
   };
 
-  const updateVolumeState = (newVolume) => {
+  const updateVolumeState = (value) => {
     if (gainNodeRef.current) {
-      const volumeValue = Math.min((newVolume / 100) * 0.5, 0.5);
-      gainNodeRef.current.gain.setValueAtTime(volumeValue, audioContextRef.current.currentTime);
+      gainNodeRef.current.gain.value = (value / 100) * 0.5;
     }
   };
 
   const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-    if (isPlaying) {
-      audioContextRef.current.suspend();
+    if (!isPlaying) {
+      // Starting playback
+      initAudio().then(() => {
+        if (audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
+        oscillatorLeftRef.current.start();
+        oscillatorRightRef.current.start();
+      });
     } else {
-      audioContextRef.current.resume();
+      // Stopping playback
+      stopAudio();
     }
+    setIsPlaying(!isPlaying);
   };
 
   useEffect(() => {
