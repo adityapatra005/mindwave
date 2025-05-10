@@ -23,12 +23,26 @@ function App() {
   const canvasRef = useRef(null);
 
   const initAudio = async () => {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+      // Initialize or resume AudioContext
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+        console.log('Creating new AudioContext');
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      } else if (audioContextRef.current.state === 'suspended') {
+        console.log('Resuming AudioContext');
+        await audioContextRef.current.resume();
+      }
+      console.log('AudioContext state:', audioContextRef.current.state);
+
+      // Create and configure gain node
       gainNodeRef.current = audioContextRef.current.createGain();
       gainNodeRef.current.gain.value = (volume / 100) * 0.5;  // Initial volume
+      
+      // Create and configure analyser
       analyserRef.current = audioContextRef.current.createAnalyser();
       analyserRef.current.fftSize = 2048;
 
+      // Create oscillators
       oscillatorLeftRef.current = audioContextRef.current.createOscillator();
       oscillatorRightRef.current = audioContextRef.current.createOscillator();
       
@@ -39,65 +53,106 @@ function App() {
       // Set initial frequencies
       oscillatorLeftRef.current.frequency.setValueAtTime(baseFreq, audioContextRef.current.currentTime);
       oscillatorRightRef.current.frequency.setValueAtTime(baseFreq + beatFreq, audioContextRef.current.currentTime);
-      
+
+      console.log('Audio initialization complete');
+
       // Setup ambient sound if selected
       if (ambientSound !== 'none') {
-        ambientSourceRef.current = audioContextRef.current.createBufferSource();
-        ambientGainRef.current = audioContextRef.current.createGain();
-        ambientGainRef.current.gain.value = ambientVolume / 100;
+      console.log('Setting up ambient sound:', ambientSound);
+      ambientSourceRef.current = audioContextRef.current.createBufferSource();
+      ambientGainRef.current = audioContextRef.current.createGain();
+      ambientGainRef.current.gain.value = ambientVolume / 100;
+  
+      // Load and play ambient sound
+      try {
+        const audioUrl = process.env.NODE_ENV === 'development' 
+          ? `/ambient/${ambientSound}.mp3`
+          : `${process.env.PUBLIC_URL}/ambient/${ambientSound}.mp3`;
+        console.log('Loading audio from:', audioUrl);
         
-        // Load and play ambient sound
-        fetch(`/ambient/${ambientSound}.mp3`)
-          .then(response => response.arrayBuffer())
-          .then(data => audioContextRef.current.decodeAudioData(data))
-          .then(buffer => {
-            ambientSourceRef.current.buffer = buffer;
-            ambientSourceRef.current.loop = true;
-            ambientSourceRef.current.connect(ambientGainRef.current);
-            ambientGainRef.current.connect(audioContextRef.current.destination);
-            if (isPlaying) {
-              ambientSourceRef.current.start();
-            }
-          });
+        const response = await fetch(audioUrl);
+        console.log('Fetch response:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.arrayBuffer();
+        console.log('Got audio data, size:', data.byteLength);
+        
+        const buffer = await audioContextRef.current.decodeAudioData(data);
+        console.log('Audio decoded, duration:', buffer.duration);
+        
+        if (!ambientSourceRef.current) {
+          console.log('Creating new buffer source node');
+          ambientSourceRef.current = audioContextRef.current.createBufferSource();
+        }
+        
+        ambientSourceRef.current.buffer = buffer;
+        ambientSourceRef.current.loop = true;
+        ambientSourceRef.current.connect(ambientGainRef.current);
+        ambientGainRef.current.connect(audioContextRef.current.destination);
+        console.log('Audio connected, isPlaying:', isPlaying);
+        
+        if (isPlaying) {
+          ambientSourceRef.current.start();
+          console.log('Ambient sound started');
+        }
+      } catch (error) {
+        console.error('Error loading ambient sound:', error);
+        setAmbientSound('none');
       }
-      
-      const merger = audioContextRef.current.createChannelMerger(2);
+    }
 
+      const merger = audioContextRef.current.createChannelMerger(2);
       oscillatorLeftRef.current.connect(merger, 0, 0);
       oscillatorRightRef.current.connect(merger, 0, 1);
       merger.connect(gainNodeRef.current);
       gainNodeRef.current.connect(analyserRef.current);
       analyserRef.current.connect(audioContextRef.current.destination);
-    };
+    } catch (error) {
+      console.error('Error initializing audio:', error);
+      setIsPlaying(false);
+    }
+  };
 
   const stopAudio = () => {
     try {
+      console.log('Stopping audio...');
+      
+      // Stop all sound sources
       if (oscillatorLeftRef.current && isPlaying) {
         oscillatorLeftRef.current.stop();
-        oscillatorLeftRef.current.disconnect();
+        oscillatorLeftRef.current = null;
       }
       if (oscillatorRightRef.current && isPlaying) {
         oscillatorRightRef.current.stop();
-        oscillatorRightRef.current.disconnect();
+        oscillatorRightRef.current = null;
       }
-      if (ambientSourceRef.current) {
+      if (ambientSourceRef.current && isPlaying) {
+        console.log('Stopping ambient sound...');
         ambientSourceRef.current.stop();
-        ambientSourceRef.current.disconnect();
+        ambientSourceRef.current = null;
       }
-      if (gainNodeRef.current) {
-        gainNodeRef.current.disconnect();
+
+      // Disconnect all nodes
+      [gainNodeRef, ambientGainRef, analyserRef].forEach(ref => {
+        if (ref.current) {
+          try {
+            ref.current.disconnect();
+            ref.current = null;
+          } catch (e) {
+            console.log('Error disconnecting node:', e);
+          }
+        }
+      });
+
+      // Suspend audio context instead of closing
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.suspend();
       }
-      if (ambientGainRef.current) {
-        ambientGainRef.current.disconnect();
-      }
-      if (analyserRef.current) {
-        analyserRef.current.disconnect();
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
+      setIsPlaying(false);
     } catch (error) {
-      console.log('Audio cleanup error:', error);
+      console.error('Error stopping audio:', error);
     }
   };
 
@@ -165,40 +220,46 @@ function App() {
     setIsPlaying(!isPlaying);
   };
 
-  useEffect(() => {
-    if (analyserRef.current && canvasRef.current) {
-      const bufferLength = analyserRef.current.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-      const canvasCtx = canvasRef.current.getContext('2d');
-      
-      const draw = () => {
-        requestAnimationFrame(draw);
-        analyserRef.current.getByteTimeDomainData(dataArray);
-        canvasCtx.fillStyle = 'rgba(26, 26, 26, 0.2)';
-        canvasCtx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        canvasCtx.lineWidth = 2;
-        canvasCtx.strokeStyle = 'rgb(0, 255, 204)';
-        canvasCtx.beginPath();
-        const sliceWidth = canvasRef.current.width * 1.0 / bufferLength;
-        let x = 0;
-        for(let i = 0; i < bufferLength; i++) {
-          const v = dataArray[i] / 128.0;
-          const y = v * canvasRef.current.height / 2;
-          if(i === 0) {
-            canvasCtx.moveTo(x, y);
-          } else {
-            canvasCtx.lineTo(x, y);
-          }
-          x += sliceWidth;
+  const draw = () => {
+    if (!analyserRef.current || !canvasRef.current) return;
+    
+    const bufferLength = analyserRef.current.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    const canvasCtx = canvasRef.current.getContext('2d');
+    
+    const animate = () => {
+      if (!isPlaying) return;
+      requestAnimationFrame(animate);
+      analyserRef.current.getByteTimeDomainData(dataArray);
+      canvasCtx.fillStyle = 'rgba(26, 26, 26, 0.2)';
+      canvasCtx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      canvasCtx.lineWidth = 2;
+      canvasCtx.strokeStyle = 'rgb(0, 255, 204)';
+      canvasCtx.beginPath();
+      const sliceWidth = canvasRef.current.width * 1.0 / bufferLength;
+      let x = 0;
+      for(let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = v * canvasRef.current.height / 2;
+        if(i === 0) {
+          canvasCtx.moveTo(x, y);
+        } else {
+          canvasCtx.lineTo(x, y);
         }
-        canvasCtx.lineTo(canvasRef.current.width, canvasRef.current.height / 2);
-        canvasCtx.stroke();
-      };
-      if (isPlaying) draw();
+        x += sliceWidth;
+      }
+      canvasCtx.lineTo(canvasRef.current.width, canvasRef.current.height / 2);
+      canvasCtx.stroke();
+    };
+    animate();
+  };
+
+  useEffect(() => {
+    if (isPlaying) {
+      draw();
     }
   }, [isPlaying]);
 
-  // Render UI
   return (
     <div className="App">
       <h1>MindWave</h1>
@@ -235,7 +296,19 @@ function App() {
           
           <div className="ambient-control">
             <label>Background Sound:</label>
-            <select value={ambientSound} onChange={(e) => setAmbientSound(e.target.value)}>
+            <select value={ambientSound} onChange={(e) => {
+              console.log('Changing ambient sound to:', e.target.value);
+              setAmbientSound(e.target.value);
+              if (isPlaying) {
+                console.log('Restarting audio...');
+                stopAudio();
+                initAudio().then(() => {
+                  oscillatorLeftRef.current.start();
+                  oscillatorRightRef.current.start();
+                  console.log('Audio restarted');
+                });
+              }
+            }}>
               <option value="none">None</option>
               <option value="rain">Rain</option>
               <option value="whitenoise">White Noise</option>
@@ -251,7 +324,12 @@ function App() {
                   min="0"
                   max="100"
                   value={ambientVolume}
-                  onChange={(e) => setAmbientVolume(e.target.value)}
+                  onChange={(e) => {
+                    setAmbientVolume(e.target.value);
+                    if (ambientGainRef.current) {
+                      ambientGainRef.current.gain.value = e.target.value / 100;
+                    }
+                  }}
                 />
               </div>
             )}
